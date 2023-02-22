@@ -1,52 +1,125 @@
-# Prerequisites
-*.d
+using System;
+using System.Threading;
+using Il2CppSystem.Collections.Generic;
+using Player;
+using TMPro;
+using UnityEngine;
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+namespace catrice.AccuracyShow
+{
+	// Token: 0x02000003 RID: 3
+	public class AccuracyShow : MonoBehaviour
+	{
+		// Token: 0x06000003 RID: 3 RVA: 0x00002078 File Offset: 0x00000278
+		public AccuracyShow(IntPtr intPtr) : base(intPtr)
+		{
+		}
 
-# Linker output
-*.ilk
-*.map
-*.exp
+		// Token: 0x06000004 RID: 4 RVA: 0x00002084 File Offset: 0x00000284
+		public void Awake()
+		{
+			AccuracyShow.Instance = this;
+			if (this._intervalTimer == null)
+			{
+				this._intervalTimer = new Timer(delegate(object arg)
+				{
+					this.update_ = true;
+				}, null, TimeSpan.FromSeconds(5.0), TimeSpan.FromSeconds(1.0));
+			}
+			PUI_Inventory inventory = GuiManager.Current.m_playerLayer.Inventory;
+			foreach (RectTransform rectTransform in inventory.m_iconDisplay.GetComponentsInChildren<RectTransform>(true))
+			{
+				if (rectTransform.name == "Background Fade")
+				{
+					GameObject gameObject = Object.Instantiate<GameObject>(rectTransform.gameObject, rectTransform.parent);
+					RectTransform component = gameObject.GetComponent<RectTransform>();
+					gameObject.gameObject.SetActive(true);
+					foreach (Transform transform in gameObject.GetComponentsInChildren<Transform>(true))
+					{
+						if (transform.name == "TimerShowObject")
+						{
+							transform.gameObject.active = false;
+						}
+					}
+					int num = EntryPoint.PlaytimeInstalled ? 2 : 0;
+					gameObject.transform.localPosition = new Vector3(-70f, (float)(-52 + -35 * num), 0f);
+					this.TextMesh = null;
+					foreach (KeyValuePair<InventorySlot, PUI_InventoryItem> keyValuePair in inventory.m_inventorySlots)
+					{
+						if (this.TextMesh == null)
+						{
+							this.TextMesh = Object.Instantiate<TextMeshPro>(keyValuePair.Value.m_slim_archetypeName);
+							break;
+						}
+					}
+					GameObject gameObject2 = new GameObject("AccuracyObject")
+					{
+						layer = 5,
+						hideFlags = HideFlags.HideAndDontSave
+					};
+					gameObject2.transform.SetParent(component.transform, false);
+					this.TextMesh.transform.SetParent(gameObject2.transform, false);
+					this.TextMesh.GetComponent<RectTransform>().anchoredPosition = new Vector2(-5f, 9f);
+					this.TextMesh.SetText("Accuracy:", true);
+					this.TextMesh.ForceMeshUpdate(false, false);
+				}
+			}
+		}
 
-# Precompiled Headers
-*.gch
-*.pch
+		// Token: 0x06000005 RID: 5 RVA: 0x000022E0 File Offset: 0x000004E0
+		public void Update()
+		{
+			this.IsCalcedShot = false;
+			this.IsCalcedHit = false;
+			if (this.update_)
+			{
+				if (Clock.ExpeditionProgressionTime < 2f)
+				{
+					this.Hitted = 0UL;
+					this.Shotted = 0UL;
+				}
+				this.update_ = false;
+				if (this.Shotted == 0UL)
+				{
+					this.TextMesh.SetText("Acc: -", true);
+				}
+				else
+				{
+					this.TextMesh.SetText(string.Format("Acc: {0}%({1}/{2})", (int)(100UL * this.Hitted / this.Shotted), this.Hitted, this.Shotted), true);
+				}
+				this.TextMesh.ForceMeshUpdate(false, false);
+			}
+		}
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+		// Token: 0x17000001 RID: 1
+		// (get) Token: 0x06000006 RID: 6 RVA: 0x00002394 File Offset: 0x00000594
+		// (set) Token: 0x06000007 RID: 7 RVA: 0x0000239C File Offset: 0x0000059C
+		public TextMeshPro TextMesh { get; set; }
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+		// Token: 0x17000002 RID: 2
+		// (get) Token: 0x06000008 RID: 8 RVA: 0x000023A5 File Offset: 0x000005A5
+		// (set) Token: 0x06000009 RID: 9 RVA: 0x000023AC File Offset: 0x000005AC
+		public static AccuracyShow Instance { get; set; }
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+		// Token: 0x04000004 RID: 4
+		private Timer _intervalTimer;
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+		// Token: 0x04000005 RID: 5
+		private bool update_;
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+		// Token: 0x04000008 RID: 8
+		public bool IsCalcedHit;
+
+		// Token: 0x04000009 RID: 9
+		public bool IsCalcedShot;
+
+		// Token: 0x0400000A RID: 10
+		public ulong Hitted;
+
+		// Token: 0x0400000B RID: 11
+		public ulong Shotted;
+
+		// Token: 0x0400000C RID: 12
+		public ulong HeadShot;
+	}
+}
